@@ -8,56 +8,54 @@
     <script src="https://unpkg.com/pinyin-pro"></script>
     <style>
         :root { --primary: #4a90e2; --success: #2ecc71; --error: #e74c3c; --warning: #f1c40f; --bg: #f8f9fa; }
-        body { font-family: 'PingFang TC', sans-serif; background: var(--bg); padding: 20px; line-height: 1.6; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
         #app { max-width: 850px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
         /* 介面樣式 */
         .header { text-align: center; margin-bottom: 20px; }
-        .nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .btn-lvl { padding: 10px 15px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px; }
+        .nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .btn-lvl { padding: 10px 15px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
         .btn-lvl.active { background: var(--primary); color: white; border-color: var(--primary); }
         
-        .guide { background: #eef6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 15px; border-left: 5px solid var(--primary); }
+        .guide { background: #eef6ff; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 15px; border-left: 5px solid var(--primary); line-height: 1.6; }
         
         .audio-zone { background: #f1f3f5; padding: 20px; border-radius: 12px; text-align: center; margin-bottom: 20px; }
         .btn-main { background: var(--primary); color: white; padding: 12px 25px; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
+        .btn-ctrl { background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 5px; margin: 0 5px; cursor: pointer; }
         
         textarea { width: 100%; height: 150px; padding: 15px; font-size: 18px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; resize: none; }
         
         /* 比對結果核心樣式 */
-        .results-container { margin-top: 40px; line-height: 4; font-size: 26px; }
+        .results-container { margin-top: 50px; line-height: 4.5; font-size: 26px; }
         .word-unit { position: relative; display: inline-block; margin: 0 4px; }
         
-        /* 正確字：保持原樣 */
-        .char-correct { color: #333; cursor: pointer; border-bottom: 2px solid transparent; }
-        .char-correct:hover { border-bottom-color: var(--success); }
+        /* 文字狀態 */
+        .char-correct { color: #333; cursor: pointer; }
+        .char-wrong { color: var(--error); font-weight: bold; cursor: pointer; border-bottom: 2px solid var(--error); }
+        .char-variant { color: var(--warning); cursor: pointer; border-bottom: 2px solid var(--warning); }
+        .char-punc { color: #ccc; cursor: default; }
 
-        /* 錯誤字：變紅 */
-        .char-wrong { color: var(--error); font-weight: bold; cursor: pointer; }
-
-        /* 繁簡不同：變黃 */
-        .char-variant { color: var(--warning); cursor: pointer; }
-
-        /* 錯誤標記：顯示在上方 */
+        /* 錯誤標記：顯示在正上方 */
         .error-tag {
-            position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
-            background: #fff0f0; border: 1px solid var(--error); border-radius: 4px;
-            padding: 2px 8px; white-space: nowrap; font-size: 14px; line-height: 1.2;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 10px; color: #333;
+            position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+            background: #fff; border: 1px solid #ddd; border-radius: 6px;
+            padding: 4px 10px; white-space: nowrap; font-size: 14px; line-height: 1.4;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15); z-index: 5;
         }
-        .error-tag .input-txt { color: var(--error); text-decoration: line-through; margin-right: 5px; }
-        .error-tag .correct-txt { color: var(--success); font-weight: bold; }
+        .error-tag b { display: block; border-bottom: 1px solid #eee; margin-bottom: 3px; }
+        .tag-input { color: var(--error); text-decoration: line-through; }
+        .tag-correct { color: var(--success); font-weight: bold; }
 
-        /* 點擊彈窗 */
+        /* 點擊彈窗：拼音與翻譯 */
         .popover {
             visibility: hidden; width: 160px; background: #333; color: #fff; text-align: center;
             border-radius: 6px; padding: 8px; position: absolute; z-index: 10;
-            top: 100%; left: 50%; transform: translateX(-50%); opacity: 0;
-            transition: opacity 0.3s; font-size: 14px; line-height: 1.4; margin-top: 5px;
+            top: 110%; left: 50%; transform: translateX(-50%); opacity: 0;
+            transition: opacity 0.2s; font-size: 14px; line-height: 1.4; pointer-events: none;
         }
-        .word-unit:active .popover, .word-unit:hover .popover { visibility: visible; opacity: 1; }
+        .word-unit:hover .popover { visibility: visible; opacity: 1; }
         
-        .punc { color: #ccc; }
+        .score-display { text-align: center; color: var(--primary); font-size: 24px; font-weight: bold; margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -75,38 +73,44 @@
 
     <div class="guide">
         💡 <strong>使用說明：</strong><br>
-        1. 聽音檔並輸入漢字（標點符號不計分）。<br>
-        2. 點擊漢字可聽讀音。<strong>紅色</strong>表示打錯了，正確答案會顯示在上方。<br>
-        <span v-if="currentIdx === 0" style="color:var(--error); font-weight:bold;">* 第一題人名（羅珊蒂、安德思）打錯沒關係！</span>
+        1. 聽音檔並打下漢字（標點符號可不輸入，不計分）。<br>
+        2. 點擊漢字可聽取 <b>AI 語音讀音</b>。紅色代表錯誤，正確答案會顯示在上方。<br>
+        <span v-if="currentIdx === 0" style="color:var(--error); font-weight:bold;">* 特別提醒：第一題的人名（羅珊蒂、安德思）打錯沒關係！</span>
     </div>
 
     <div class="audio-zone">
-        <button class="btn-main" @click="togglePlay">{{ isPlaying ? '⏸ 暫停' : '▶ 播放音檔' }}</button>
-        <div style="margin-top:10px;">
+        <div style="margin-bottom: 15px;">
+            <button class="btn-ctrl" @click="skip(-5)">⏪ 後退 5s</button>
+            <button class="btn-main" @click="togglePlay">{{ isPlaying ? '⏸ 暫停' : '▶ 播放' }}</button>
+            <button class="btn-ctrl" @click="skip(5)">⏩ 前進 5s</button>
+        </div>
+        <div>
             速度：
-            <button v-for="s in [0.5, 0.75, 1.0]" @click="setSpeed(s)" :class="['btn-lvl', { active: playbackRate === s }]" style="padding:4px 8px; font-size:12px;">{{s}}x</button>
+            <button v-for="s in [0.5, 0.75, 1.0]" @click="setSpeed(s)" :class="['btn-lvl', { active: playbackRate === s }]" style="padding:4px 10px; font-size:13px; margin:0 3px;">{{s}}x</button>
         </div>
         <audio ref="player" :src="`q${currentIdx+1}.mp3`" @play="isPlaying=true" @pause="isPlaying=false"></audio>
     </div>
 
     <div v-if="!submitted">
-        <textarea v-model="userInput" placeholder="在此輸入聽到的內容..."></textarea>
+        <textarea v-model="userInput" placeholder="在此輸入你聽到的內容..."></textarea>
         <div style="text-align:center; margin-top:15px;">
-            <button class="btn-main" @click="submitAnswer" style="background:var(--success)">檢查答案</button>
+            <button class="btn-main" @click="submitAnswer" style="background:var(--success)">繳交答案</button>
         </div>
     </div>
 
     <div v-else class="results-container">
-        <div style="text-align:center; color:var(--primary); font-size:20px; margin-bottom:20px;">完成率：{{ score }}%</div>
+        <div class="score-display">得分：{{ score }}%</div>
         
         <div class="text-display">
             <span v-for="(item, i) in diffResults" :key="i" class="word-unit">
+                
                 <div v-if="item.type === 'wrong'" class="error-tag">
-                    <span class="input-txt">{{ item.input || '未填' }}</span>
-                    <span class="correct-txt">→ {{ item.target }} ({{ item.pinyin }})</span>
+                    <b>錯誤對照</b>
+                    <span class="tag-input">{{ item.input || '未填' }}</span> → <span class="tag-correct">{{ item.target }}</span>
                 </div>
                 <div v-if="item.type === 'variant'" class="error-tag" style="border-color:var(--warning)">
-                    <span style="color:var(--warning)">繁簡不同：{{ item.input }} → {{ item.target }}</span>
+                    <b>繁簡不同</b>
+                    <span>{{ item.input }} → {{ item.target }}</span>
                 </div>
 
                 <span :class="getCharClass(item)" @click="item.type !== 'punc' && speak(item.target)">
@@ -116,14 +120,14 @@
                 <div class="popover" v-if="item.type !== 'punc'">
                     <strong>{{ item.target }}</strong><br>
                     拼音：{{ item.pinyin }}<br>
-                    翻譯：{{ item.trans || '點擊聽發音' }}
+                    {{ item.trans ? '翻譯：' + item.trans : '點擊聽發音' }}
                 </div>
             </span>
         </div>
 
-        <div style="text-align:center; margin-top:40px;">
-            <button class="btn-lvl" @click="reset">重新挑戰</button>
-            <button class="btn-main" @click="nextLevel" v-if="currentIdx < 5" style="margin-left:10px;">下一題</button>
+        <div style="text-align:center; margin-top:50px;">
+            <button class="btn-lvl" @click="reset">重新挑戰本題</button>
+            <button class="btn-main" @click="nextLevel" v-if="currentIdx < 5" style="margin-left:15px;">下一題</button>
         </div>
     </div>
 </div>
@@ -132,18 +136,18 @@
 const { createApp, ref, computed } = Vue;
 const { pinyin } = pinyinPro;
 
-// 常用繁簡對抗表
-const variants = { '体':'體', '国':'國', '说':'說', '这':'這', '么':'麼', '系':'係', '学':'學', '门':'門', '再':'在', '你':'妳', '妳':'你' };
+// 內置小型繁簡對照表 (可根據需要自行擴充)
+const variants = { '体':'體', '国':'國', '说':'說', '这':'這', '么':'麼', '系':'係', '学':'學', '门':'門', '再':'在', '你':'妳', '妳':'你', '面':'麵' };
 
 createApp({
     setup() {
         const quizData = [
-            { text: "羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？", trans: { "學期": "semester", "同學": "classmate" } },
-            { text: "沒有，都沒有。你們班怎麼樣？", trans: { "怎麼樣": "how is it" } },
+            { text: "羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？", trans: { "下課": "finish class", "學期": "semester", "同學": "classmate" } },
+            { text: "沒有，都沒有。你們班怎麼樣？", trans: { "沒有": "none", "怎麼樣": "how is it" } },
             { text: "都是新生，我一個也不認識，而且只有我一個男的。", trans: { "新生": "new student", "認識": "know" } },
             { text: "老師呢？老師怎麼樣？", trans: { "老師": "teacher" } },
-            { text: "老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？", trans: { "口試": "oral exam", "壓力": "stress" } },
-            { text: "老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。", trans: { "說明": "explanation", "熱情": "enthusiastic" } }
+            { text: "老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？", trans: { "嚴": "strict", "壓力": "stress" } },
+            { text: "老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。", trans: { "清楚": "clear", "熱情": "enthusiastic" } }
         ];
 
         const currentIdx = ref(0);
@@ -157,9 +161,12 @@ createApp({
 
         const togglePlay = () => { if (player.value.paused) player.value.play(); else player.value.pause(); };
         const setSpeed = (s) => { playbackRate.value = s; player.value.playbackRate = s; };
-        
+        const skip = (v) => { player.value.currentTime += v; };
+
+        // 核心比對演算法
         const submitAnswer = () => {
             const targetText = quizData[currentIdx.value].text;
+            // 過濾掉非漢字內容進行計分
             const cleanTarget = targetText.replace(/[^\u4e00-\u9fa5]/g, "");
             const cleanInput = userInput.value.replace(/[^\u4e00-\u9fa5]/g, "");
             
@@ -168,6 +175,7 @@ createApp({
             let correctCount = 0;
 
             for (let char of targetText) {
+                // 如果是標點符號，直接顯示不比對
                 if (/[^\u4e00-\u9fa5]/.test(char)) {
                     res.push({ display: char, type: 'punc', target: char });
                 } else {
@@ -179,7 +187,7 @@ createApp({
                         type = 'correct';
                         correctCount++;
                     } else if (variants[iChar] === tChar || variants[tChar] === iChar) {
-                        type = 'variant';
+                        type = 'variant'; // 繁簡不同，算對但黃色標記
                         correctCount++;
                     }
 
@@ -205,10 +213,7 @@ createApp({
             return "";
         };
 
-        const getCharClass = (i) => {
-            if (i.type === 'punc') return 'punc';
-            return `char-${i.type}`;
-        };
+        const getCharClass = (i) => i.type === 'punc' ? 'char-punc' : `char-${i.type}`;
 
         const speak = (t) => {
             const u = new SpeechSynthesisUtterance(t);
@@ -223,7 +228,7 @@ createApp({
             if (player.value) { player.value.pause(); player.value.currentTime = 0; }
         };
 
-        return { currentIdx, userInput, submitted, isPlaying, playbackRate, player, diffResults, score, togglePlay, setSpeed, submitAnswer, getCharClass, speak, changeLevel, nextLevel, reset };
+        return { currentIdx, userInput, submitted, isPlaying, playbackRate, player, diffResults, score, togglePlay, setSpeed, skip, submitAnswer, getCharClass, speak, changeLevel, nextLevel, reset };
     }
 }).mount('#app');
 </script>
