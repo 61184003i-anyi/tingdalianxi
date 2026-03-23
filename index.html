@@ -3,243 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>華裔聽寫練習遊戲</title>
+    <title>聽說讀寫練習室 - 識字挑戰</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://unpkg.com/pinyin-pro"></script>
     <style>
-        :root {
-            --primary: #4a90e2;
-            --success: #2ecc71;
-            --error: #e74c3c;
-            --warning: #f1c40f;
-            --bg: #f8f9fa;
+        :root { --primary: #4a90e2; --success: #2ecc71; --error: #e74c3c; --warning: #f1c40f; --bg: #f8f9fa; }
+        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        #app { max-width: 850px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        
+        .header { text-align: center; margin-bottom: 20px; }
+        .level-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
+        .btn-lvl { padding: 8px 15px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .btn-lvl.active { background: var(--primary); color: white; }
+        
+        /* 播放器控制 */
+        .audio-zone { background: #f1f3f5; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; }
+        .big-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; }
+        .btn-main { background: var(--primary); color: white; padding: 15px 35px; border: none; border-radius: 10px; font-size: 20px; cursor: pointer; font-weight: bold; }
+        .btn-skip { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
+        .speed-group { display: flex; justify-content: center; gap: 8px; }
+        .btn-speed { padding: 5px 12px; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-size: 14px; cursor: pointer; }
+        .btn-speed.active { background: #495057; color: white; }
+
+        textarea { width: 100%; height: 160px; padding: 15px; font-size: 20px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; resize: none; margin-bottom: 20px; outline: none; }
+        textarea:focus { border-color: var(--primary); }
+
+        /* 結果顯示區域 */
+        .results-container { margin-top: 30px; line-height: 3; font-size: 28px; }
+        .char-box { position: relative; display: inline-block; margin: 0 3px; cursor: pointer; }
+        
+        /* 狀態顏色 */
+        .status-correct { color: #333; }
+        .status-wrong { color: var(--error); border-bottom: 3px solid var(--error); font-weight: bold; }
+        .status-variant { color: var(--warning); border-bottom: 3px solid var(--warning); }
+        .status-extra { color: #aaa; text-decoration: line-through; }
+
+        /* Hover 彈出視窗 */
+        .hover-info {
+            visibility: hidden; opacity: 0;
+            position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+            background: #2c3e50; color: #fff; padding: 10px 15px; border-radius: 8px;
+            font-size: 16px; white-space: nowrap; z-index: 100; transition: 0.2s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); line-height: 1.4; text-align: center;
         }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); margin: 0; padding: 20px; display: flex; justify-content: center; }
-        #app { max-width: 800px; width: 100%; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        h1, h2 { color: #333; text-align: center; }
-        .setup-section { border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-        .audio-controls { display: flex; flex-direction: column; align-items: center; gap: 15px; background: #eee; padding: 20px; border-radius: 10px; }
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px; transition: 0.2s; }
-        .btn-main { background: var(--primary); color: white; font-weight: bold; padding: 15px 30px; }
-        .btn-speed { background: #95a5a6; color: white; }
-        .btn-speed.active { background: #34495e; transform: scale(1.1); }
-        .input-area { margin: 20px 0; }
-        textarea { width: 100%; height: 150px; padding: 15px; border: 2px solid #ddd; border-radius: 10px; font-size: 18px; line-height: 1.6; resize: none; box-sizing: border-box; }
-        textarea:focus { border-color: var(--primary); outline: none; }
-        
-        .result-area { margin-top: 30px; line-height: 2.5; font-size: 22px; }
-        .word-box { display: inline-block; position: relative; margin: 0 2px; cursor: pointer; border-bottom: 2px solid transparent; }
-        .word-correct { color: #333; }
-        .word-wrong { color: var(--error); border-bottom-color: var(--error); font-weight: bold; }
-        .word-variant { color: var(--warning); border-bottom-color: var(--warning); }
-        
-        .popover { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 8px 12px; border-radius: 5px; font-size: 14px; white-space: nowrap; z-index: 10; display: none; }
-        .word-box:hover .popover { display: block; }
-        .info-tag { font-size: 12px; background: rgba(255,255,255,0.2); padding: 2px 4px; border-radius: 3px; margin-right: 5px; }
-        
-        .score-board { text-align: center; font-size: 24px; font-weight: bold; color: var(--primary); margin: 20px 0; }
-        .guide { font-size: 14px; color: #666; background: #fff3cd; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .char-box:hover .hover-info { visibility: visible; opacity: 1; }
+        .hover-info b { color: var(--success); font-size: 20px; }
+        .hover-info .label { font-size: 12px; color: #bdc3c7; display: block; margin-bottom: 2px; }
+
+        .score-box { text-align: center; font-size: 26px; font-weight: bold; color: var(--primary); margin-bottom: 20px; }
+        .hint { font-size: 14px; color: #7f8c8d; text-align: center; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div id="app">
-    <h1>聽力聽寫練習遊戲</h1>
-    
-    <div class="setup-section">
-        <label>選擇題目：</label>
-        <select v-model="currentLessonIdx" @change="resetGame">
-            <option v-for="(l, idx) in lessons" :key="idx" :value="idx">{{ l.title }}</option>
-        </select>
+    <div class="header">
+        <h1>聽說讀寫練習室</h1>
+        <p v-if="currentIdx === 0" style="color:var(--error); font-weight:bold;">* 第一題人名（羅珊蒂、安德思）打錯沒關係！</p>
     </div>
 
-    <div class="guide">
-        💡 <strong>使用說明：</strong><br>
-        1. 點擊「播放」開始聽音檔，可調整速度或快進/快退。<br>
-        2. 在下方框內輸入你聽到的漢字（繁簡皆可）。<br>
-        3. 按下「繳交答案」檢查結果。顏色說明：黑色(正確)、<span style="color:var(--error)">紅色(錯誤)</span>、<span style="color:var(--warning)">黃色(繁簡不同)</span>。
+    <div class="level-nav">
+        <button v-for="n in 6" :key="n" @click="changeLevel(n-1)" :class="['btn-lvl', { active: currentIdx === n-1 }]">
+            第 {{ n }} 題
+        </button>
     </div>
 
-    <div class="audio-controls">
-        <div class="btn-group">
-            <button @click="skip(-5)">⏪ 後退 5s</button>
-            <button class="btn-main" @click="togglePlay">{{ isPlaying ? '⏸ 暫停' : '▶ 播放' }}</button>
-            <button @click="skip(5)">⏩ 前進 5s</button>
+    <div class="audio-zone">
+        <div class="big-controls">
+            <button class="btn-skip" @click="skip(-5)">⏪ -5s</button>
+            <button class="btn-main" @click="togglePlay">{{ isPlaying ? '⏸ PAUSE' : '▶ PLAY' }}</button>
+            <button class="btn-skip" @click="skip(5)">+5s ⏩</button>
         </div>
-        <div class="btn-group">
-            <span>速度：</span>
-            <button v-for="s in speeds" :key="s" @click="setSpeed(s)" :class="['btn-speed', { active: playbackRate === s }]">
-                {{ s }}x
+        <div class="speed-group">
+            <button v-for="s in [0.5, 0.75, 1.0]" @click="setSpeed(s)" :class="['btn-speed', { active: playbackRate === s }]">
+                {{ s }}x Speed
             </button>
         </div>
-        <audio ref="audioPlayer" :src="currentLesson.audio" @play="isPlaying = true" @pause="isPlaying = false"></audio>
+        <audio ref="player" :src="`q${currentIdx+1}.mp3`" @play="isPlaying=true" @pause="isPlaying=false"></audio>
     </div>
 
-    <div class="input-area" v-if="!submitted">
-        <textarea v-model="userInput" placeholder="在此輸入聽到的內容..."></textarea>
-        <div style="text-align: center; margin-top: 10px;">
-            <button class="btn-main" @click="submit" :disabled="!userInput">繳交答案</button>
+    <div v-if="!submitted">
+        <textarea v-model="userInput" placeholder="Listen and type the Chinese characters here..."></textarea>
+        <div style="text-align:center;">
+            <button class="btn-main" @click="checkAnswer" style="background:var(--success)">繳交答案 (Submit)</button>
         </div>
+        <p class="hint">註：標點符號（，。？！）不計入評分。</p>
     </div>
 
-    <div class="result-area" v-else>
-        <div class="score-board">
-            得分：{{ score.percent }}% ({{ score.correct }}/{{ score.total }})
-        </div>
-        
-        <div class="words-container">
-            <span v-for="(item, idx) in diffResults" :key="idx" class="word-box" 
-                  :class="getWordClass(item)" @click="speak(item.correct)">
-                {{ item.display }}
-                <div class="popover">
-                    <template v-if="item.status === 'wrong'">
-                        <div><span class="info-tag">你打的</span>{{ item.input }} ({{ item.inputPinyin }})</div>
-                        <hr>
-                    </template>
-                    <div><span class="info-tag">正確</span>{{ item.correct }}</div>
-                    <div><span class="info-tag">拼音</span>{{ item.pinyin }}</div>
-                    <div v-if="item.trans"><span class="info-tag">翻譯</span>{{ item.trans }}</div>
+    <div v-else>
+        <div class="score-box">得分：{{ score }}%</div>
+        <div class="results-container">
+            <span v-for="(item, i) in diffResults" :key="i" class="char-box" @click="speak(item.correctChar)">
+                <span :class="'status-' + item.type">{{ item.inputChar }}</span>
+                
+                <div class="hover-info">
+                    <span v-if="item.type === 'correct'">
+                        <span class="label">拼音</span>
+                        {{ item.pinyin }}
+                    </span>
+                    <span v-else-if="item.type === 'variant'">
+                        <span class="label">繁簡對照</span>
+                        輸入：{{ item.inputChar }} → 正確：<b>{{ item.correctChar }}</b>
+                        <br>{{ item.pinyin }}
+                    </span>
+                    <span v-else-if="item.type === 'wrong'">
+                        <span class="label">正確答案</span>
+                        <b>{{ item.correctChar }}</b>
+                        <br>{{ item.pinyin }}
+                        <br><small v-if="item.trans">({{ item.trans }})</small>
+                    </span>
+                    <span v-else-if="item.type === 'extra'">
+                        <span class="label">多打的字</span>
+                        此處無文字
+                    </span>
                 </div>
             </span>
+            <span v-if="missingCount > 0" style="color:#bdc3c7; font-size:18px; margin-left:10px;">
+                ... (漏掉 {{ missingCount }} 個字)
+            </span>
         </div>
-
-        <div style="text-align: center; margin-top: 30px;">
-            <button @click="resetGame">再試一次 / 下一題</button>
+        
+        <div style="text-align:center; margin-top:40px;">
+            <button class="btn-lvl" @click="reset">重新嘗試 (Retry)</button>
+            <button class="btn-main" @click="nextLevel" v-if="currentIdx < 5" style="margin-left:20px;">下一題 (Next)</button>
         </div>
     </div>
 </div>
 
 <script>
-const { createApp, ref, computed } = Vue;
+const { createApp, ref } = Vue;
 const { pinyin } = pinyinPro;
+
+const variants = { '体':'體', '国':'國', '说':'說', '这':'這', '么':'麼', '系':'係', '学':'學', '门':'門', '再':'在', '你':'妳', '妳':'你', '面':'麵', '裡':'裏' };
 
 createApp({
     setup() {
-        const lessons = [
-            {
-                title: "對話：開學了",
-                audio: "q1.mp3",
-                text: "第一課 開學了 對話 安德思：羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？ 羅珊蒂：沒有，都沒有。你們班怎麼樣？ 安德思：都是新生，我一個也不認識，而且只有我一個男的。 羅珊蒂：老師呢？老師怎麼樣？ 安德思：老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？ 羅珊蒂：老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。 安德思：聽起來不錯。還有位子嗎？有位子的話我想去旁聽。 羅珊蒂：你想換班啊？你不是打算在台灣上大學嗎？老師嚴才學得快，學得好啊。 安德思：可是我是獎學金學生。要是成績不到80分，拿不到獎學金，就得回國了。 羅珊蒂：我真羨慕你有獎學金。不像我休學來台灣，花的都是父母的錢，一定得用功唸書才行。 何雅婷走過來 安德思：何雅婷，聽說你轉系了？ 何雅婷：是啊，這個學期我轉到國際關係系去了。 安德思：原來念的會計系不是很熱門嗎？怎麼不念了？ 何雅婷：我念不下去了。每天熬夜念書，可是還是差一點被當。這樣下去，四年恐怕沒辦法畢業。 羅珊蒂：念國際關係很適合妳。你的英文那麼流利，口才又好，以後可以當外交人員。 何雅婷：謝謝你這麼說。我真想多跟你們聊聊。可惜我得走了，我跟教授約好了討論選課的事，不能遲到。再見。",
-                trans: { "開學": "School starts", "壓力": "Pressure", "獎學金": "Scholarship", "熬夜": "Stay up late" } // 可在此擴充
-            },
-            {
-                title: "短文：何雅婷要轉系",
-                audio: "q2.mp3",
-                text: "短文 何雅婷要轉系 何雅婷是家裡的獨生女。從小父母讓她念私立小學，下了課還去學西班牙文、書法、游泳跟網球。何雅婷也沒讓父母失望，成績一直都很好，還考上了理想的大學，念的是熱門的會計系。沒想到才念了一個學期，她就發現跟他的興趣不合，念起來非常痛苦。他想了很久，決定跟媽媽討論轉系的事。媽媽聽到何雅婷打算轉到國際關係系，非常生氣。他覺得何雅婷好不容易才考上這麼好的科系，怎麼可以說放棄就放棄？而且，念會計系工作機會比較多。跟興趣比起來，將來的發展當然更重要。如果她真的對別的課有興趣，利用時間去旁聽就好了。不管何雅婷怎麼說，他都反對。不過何雅婷告訴媽媽，他個性活潑，而且外語能力不錯，如果念國際關係，會有更好的成績，請媽媽不必擔心他的將來。這一次就請媽媽讓她自己決定吧。媽媽想了又想，捨不得女兒念的這麼痛苦，最後還是同意了。何雅婷聽了非常高興，他立刻上網填表辦轉系的手續，申請上學期的成績單，然後還請教授幫他寫推薦信。",
-                trans: { "獨生女": "Only daughter", "失望": "Disappointed", "手續": "Procedures" }
-            }
+        const quizData = [
+            { text: "羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？", trans: { "學期": "semester", "同學": "classmate" } },
+            { text: "沒有，都沒有。你們班怎麼樣？", trans: { "怎麼樣": "how is it" } },
+            { text: "都是新生，我一個也不認識，而且只有我一個男的。", trans: { "新生": "new student", "認識": "know" } },
+            { text: "老師呢？老師怎麼樣？", trans: { "老師": "teacher" } },
+            { text: "老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？", trans: { "口試": "oral exam", "壓力": "stress" } },
+            { text: "老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。", trans: { "說明": "explanation", "熱情": "enthusiastic" } }
         ];
 
-        const currentLessonIdx = ref(0);
-        const currentLesson = computed(() => lessons[currentLessonIdx.value]);
-        
-        const audioPlayer = ref(null);
-        const isPlaying = ref(false);
-        const playbackRate = ref(1.0);
-        const speeds = [0.5, 0.75, 1.0, 1.25];
-        
+        const currentIdx = ref(0);
         const userInput = ref("");
         const submitted = ref(false);
+        const isPlaying = ref(false);
+        const playbackRate = ref(1.0);
+        const player = ref(null);
         const diffResults = ref([]);
-        const score = ref({ correct: 0, total: 0, percent: 0 });
+        const score = ref(0);
+        const missingCount = ref(0);
 
-        const togglePlay = () => {
-            if (audioPlayer.value.paused) audioPlayer.value.play();
-            else audioPlayer.value.pause();
-        };
+        const togglePlay = () => { if (player.value.paused) player.value.play(); else player.value.pause(); };
+        const setSpeed = (s) => { playbackRate.value = s; player.value.playbackRate = s; };
+        const skip = (v) => { player.value.currentTime += v; };
 
-        const setSpeed = (s) => {
-            playbackRate.value = s;
-            audioPlayer.value.playbackRate = s;
-        };
-
-        const skip = (time) => {
-            audioPlayer.value.currentTime += time;
-        };
-
-        // 核心比對邏輯
-        const submit = () => {
-            const answer = currentLesson.value.text.replace(/\s+/g, "");
-            const input = userInput.value.replace(/\s+/g, "");
-            const results = [];
+        const checkAnswer = () => {
+            const targetStr = quizData[currentIdx.value].text.replace(/[^\u4e00-\u9fa5]/g, "");
+            const inputStr = userInput.value.replace(/[^\u4e00-\u9fa5]/g, "");
+            const transMap = quizData[currentIdx.value].trans;
+            
+            let results = [];
             let correctCount = 0;
 
-            const maxLength = Math.max(answer.length, input.length);
-            
-            for (let i = 0; i < answer.length; i++) {
-                const correctChar = answer[i];
-                const inputChar = input[i] || "";
-                
-                let status = "wrong";
-                if (inputChar === correctChar) {
-                    status = "correct";
+            for (let i = 0; i < inputStr.length; i++) {
+                const iChar = inputStr[i];
+                const tChar = targetStr[i] || "";
+                let type = 'wrong';
+
+                if (iChar === tChar) {
+                    type = 'correct';
                     correctCount++;
-                } else if (isVariant(inputChar, correctChar)) {
-                    status = "variant"; // 繁簡不同
+                } else if (variants[iChar] === tChar || variants[tChar] === iChar) {
+                    type = 'variant';
                     correctCount++;
+                } else if (!tChar) {
+                    type = 'extra';
                 }
 
                 results.push({
-                    display: status === "wrong" ? (inputChar || "＿") : correctChar,
-                    correct: correctChar,
-                    input: inputChar,
-                    pinyin: pinyin(correctChar, { toneType: 'symbol' }),
-                    inputPinyin: inputChar ? pinyin(inputChar, { toneType: 'symbol' }) : "",
-                    status: status,
-                    trans: currentLesson.value.trans[correctChar] || "" // 這裡可以擴展成詞彙比對
+                    inputChar: iChar,
+                    correctChar: tChar,
+                    type: type,
+                    pinyin: tChar ? pinyin(tChar, { toneType: 'symbol' }) : "",
+                    trans: findTrans(tChar, transMap)
                 });
             }
 
             diffResults.value = results;
-            score.value = {
-                correct: correctCount,
-                total: answer.length,
-                percent: Math.round((correctCount / answer.length) * 100)
-            };
+            missingCount.value = Math.max(0, targetStr.length - inputStr.length);
+            score.value = Math.round((correctCount / targetStr.length) * 100);
             submitted.value = true;
         };
 
-        // 簡易繁簡判斷 (可用於擴充更強大的對照表)
-        const isVariant = (char1, char2) => {
-            if (!char1 || !char2) return false;
-            // 這裡示範基本的邏輯，實際可引入更完整的繁簡庫
-            // 為簡化，此處僅模擬，若有需要可使用開放 API
-            return false; 
+        const findTrans = (char, map) => {
+            for (let key in map) { if (key.includes(char)) return map[key]; }
+            return "";
         };
 
-        const getWordClass = (item) => {
-            return {
-                'word-correct': item.status === 'correct',
-                'word-wrong': item.status === 'wrong',
-                'word-variant': item.status === 'variant'
-            };
+        const speak = (t) => {
+            if (!t) return;
+            const u = new SpeechSynthesisUtterance(t);
+            u.lang = 'zh-TW';
+            window.speechSynthesis.speak(u);
         };
 
-        const speak = (text) => {
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.lang = 'zh-TW';
-            window.speechSynthesis.speak(msg);
+        const changeLevel = (i) => { currentIdx.value = i; reset(); };
+        const nextLevel = () => { currentIdx.value++; reset(); };
+        const reset = () => { 
+            submitted.value = false; userInput.value = ""; 
+            if (player.value) { player.value.pause(); player.value.currentTime = 0; }
         };
 
-        const resetGame = () => {
-            submitted.value = false;
-            userInput.value = "";
-            if (audioPlayer.value) {
-                audioPlayer.value.pause();
-                audioPlayer.value.currentTime = 0;
-            }
-        };
-
-        return {
-            lessons, currentLessonIdx, currentLesson,
-            audioPlayer, isPlaying, playbackRate, speeds,
-            userInput, submitted, diffResults, score,
-            togglePlay, setSpeed, skip, submit, getWordClass, speak, resetGame
-        };
+        return { currentIdx, userInput, submitted, isPlaying, playbackRate, player, diffResults, score, missingCount, togglePlay, setSpeed, skip, checkAnswer, speak, changeLevel, nextLevel, reset };
     }
 }).mount('#app');
 </script>
-
 </body>
 </html>
