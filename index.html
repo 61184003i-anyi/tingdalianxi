@@ -1,226 +1,339 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>聽說讀寫練習室 - 識字挑戰</title>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://unpkg.com/pinyin-pro"></script>
+    <title>華裔中文聽寫練習</title>
     <style>
-        :root { --primary: #4a90e2; --success: #2ecc71; --error: #e74c3c; --warning: #f1c40f; --bg: #f8f9fa; }
-        body { font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        #app { max-width: 850px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        .header { text-align: center; margin-bottom: 20px; }
-        .level-nav { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; }
-        .btn-lvl { padding: 8px 15px; border: 1px solid #ddd; background: white; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .btn-lvl.active { background: var(--primary); color: white; }
-        
-        /* 播放器控制 */
-        .audio-zone { background: #f1f3f5; padding: 25px; border-radius: 12px; text-align: center; margin-bottom: 25px; }
-        .big-controls { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 15px; }
-        .btn-main { background: var(--primary); color: white; padding: 15px 35px; border: none; border-radius: 10px; font-size: 20px; cursor: pointer; font-weight: bold; }
-        .btn-skip { background: #6c757d; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; }
-        .speed-group { display: flex; justify-content: center; gap: 8px; }
-        .btn-speed { padding: 5px 12px; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-size: 14px; cursor: pointer; }
-        .btn-speed.active { background: #495057; color: white; }
-
-        textarea { width: 100%; height: 160px; padding: 15px; font-size: 20px; border: 2px solid #ddd; border-radius: 10px; box-sizing: border-box; resize: none; margin-bottom: 20px; outline: none; }
-        textarea:focus { border-color: var(--primary); }
-
-        /* 結果顯示區域 */
-        .results-container { margin-top: 30px; line-height: 3; font-size: 28px; }
-        .char-box { position: relative; display: inline-block; margin: 0 3px; cursor: pointer; }
-        
-        /* 狀態顏色 */
-        .status-correct { color: #333; }
-        .status-wrong { color: var(--error); border-bottom: 3px solid var(--error); font-weight: bold; }
-        .status-variant { color: var(--warning); border-bottom: 3px solid var(--warning); }
-        .status-extra { color: #aaa; text-decoration: line-through; }
-
-        /* Hover 彈出視窗 */
-        .hover-info {
-            visibility: hidden; opacity: 0;
-            position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
-            background: #2c3e50; color: #fff; padding: 10px 15px; border-radius: 8px;
-            font-size: 16px; white-space: nowrap; z-index: 100; transition: 0.2s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); line-height: 1.4; text-align: center;
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f7fa;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --text-color: #333;
+            --border-radius: 8px;
         }
-        .char-box:hover .hover-info { visibility: visible; opacity: 1; }
-        .hover-info b { color: var(--success); font-size: 20px; }
-        .hover-info .label { font-size: 12px; color: #bdc3c7; display: block; margin-bottom: 2px; }
 
-        .score-box { text-align: center; font-size: 26px; font-weight: bold; color: var(--primary); margin-bottom: 20px; }
-        .hint { font-size: 14px; color: #7f8c8d; text-align: center; margin-top: 10px; }
+        body {
+            font-family: 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+
+        /* 音訊控制區 */
+        .audio-player {
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-play { background-color: var(--success-color); color: white; }
+        .btn-pause { background-color: #f39c12; color: white; }
+        .btn-skip { background-color: #95a5a6; color: white; }
+        .btn-speed { background-color: var(--primary-color); color: white; }
+
+        /* 輸入區 */
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 20px;
+            line-height: 1.6;
+            resize: none;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .check-btn-container {
+            text-align: right;
+            margin-top: 10px;
+        }
+
+        .btn-check {
+            background-color: var(--primary-color);
+            color: white;
+            font-size: 18px;
+            padding: 12px 30px;
+        }
+
+        /* 回饋區 */
+        .feedback-section {
+            margin-top: 30px;
+            border-top: 2px solid var(--secondary-color);
+            padding-top: 20px;
+            display: none; /* 預設隱藏 */
+        }
+
+        .result-status {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .status-correct { color: var(--success-color); }
+        .status-error { color: var(--error-color); }
+
+        /* 逐字對比區 */
+        .comparison-display {
+            font-size: 28px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            background-color: #fafafa;
+        }
+
+        .word-unit {
+            display: inline-block;
+            margin: 0 2px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .word-unit:hover {
+            background-color: #eaf2f8;
+            border-bottom-color: var(--primary-color);
+        }
+
+        .correct { color: var(--text-color); }
+        .incorrect { color: var(--error-color); text-decoration: underline; }
+        .missing { color: #ccc; font-style: italic; } /* 漏掉的字 */
+
+        /* 詳細回饋彈窗/區塊 */
+        .detail-pane {
+            background-color: #eaf2f8;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            display: none; /* 預設隱藏 */
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .detail-header {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .close-detail {
+            cursor: pointer;
+            color: #888;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .detail-item strong { display: block; color: #666; font-size: 14px; margin-bottom: 5px; }
+        .detail-char { font-size: 36px; font-weight: bold; }
+        .detail-pinyin { font-size: 18px; color: #555; }
+        .detail-defn { font-size: 16px; color: #333; font-style: italic; }
+
+        /* 進度條 */
+        .progress-bar {
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--success-color);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        /* 下一題按鈕 */
+        .next-btn-container {
+            text-align: center;
+            margin-top: 30px;
+            display: none;
+        }
+
+        .btn-next {
+            background-color: var(--success-color);
+            color: white;
+            font-size: 18px;
+            padding: 12px 50px;
+        }
+
+        /* 輔助：拼音上標 */
+        ruby {
+            font-size: 28px;
+        }
+        rt {
+            font-size: 12px;
+            color: #777;
+        }
+
     </style>
 </head>
 <body>
 
-<div id="app">
-    <div class="header">
-        <h1>聽說讀寫練習室</h1>
-        <p v-if="currentIdx === 0" style="color:var(--error); font-weight:bold;">* 第一題人名（羅珊蒂、安德思）打錯沒關係！</p>
+<div class="container">
+    <h1>華裔中文聽寫練習</h1>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
     </div>
 
-    <div class="level-nav">
-        <button v-for="n in 6" :key="n" @click="changeLevel(n-1)" :class="['btn-lvl', { active: currentIdx === n-1 }]">
-            第 {{ n }} 題
-        </button>
-    </div>
-
-    <div class="audio-zone">
-        <div class="big-controls">
-            <button class="btn-skip" @click="skip(-5)">⏪ -5s</button>
-            <button class="btn-main" @click="togglePlay">{{ isPlaying ? '⏸ PAUSE' : '▶ PLAY' }}</button>
-            <button class="btn-skip" @click="skip(5)">+5s ⏩</button>
+    <div class="audio-player">
+        <h3 id="questionTitle">第 1 題 / 共 6 題</h3>
+        <audio id="mainAudio"></audio>
+        <div class="controls">
+            <button class="btn-pause" onclick="controlAudio('rewind')">⏪ -1s</button>
+            <button class="btn-play" id="playBtn" onclick="controlAudio('play')">播放</button>
+            <button class="btn-pause" id="pauseBtn" onclick="controlAudio('pause')" style="display:none;">暫停</button>
+            <button class="btn-pause" onclick="controlAudio('forward')">⏩ +1s</button>
+            <button class="btn-speed" id="speedBtn" onclick="controlAudio('speed')">速度: 1.0x</button>
         </div>
-        <div class="speed-group">
-            <button v-for="s in [0.5, 0.75, 1.0]" @click="setSpeed(s)" :class="['btn-speed', { active: playbackRate === s }]">
-                {{ s }}x Speed
-            </button>
-        </div>
-        <audio ref="player" :src="`q${currentIdx+1}.mp3`" @play="isPlaying=true" @pause="isPlaying=false"></audio>
     </div>
 
-    <div v-if="!submitted">
-        <textarea v-model="userInput" placeholder="Listen and type the Chinese characters here..."></textarea>
-        <div style="text-align:center;">
-            <button class="btn-main" @click="checkAnswer" style="background:var(--success)">繳交答案 (Submit)</button>
+    <div class="input-section">
+        <textarea id="userInput" placeholder="請聽錄音，並將聽到的漢字打在這裡... (不必打標點符號)"></textarea>
+        <div class="check-btn-container">
+            <button class="btn-check" id="checkBtn" onclick="checkAnswer()">檢查答案</button>
         </div>
-        <p class="hint">註：標點符號（，。？！）不計入評分。</p>
     </div>
 
-    <div v-else>
-        <div class="score-box">得分：{{ score }}%</div>
-        <div class="results-container">
-            <span v-for="(item, i) in diffResults" :key="i" class="char-box" @click="speak(item.correctChar)">
-                <span :class="'status-' + item.type">{{ item.inputChar }}</span>
-                
-                <div class="hover-info">
-                    <span v-if="item.type === 'correct'">
-                        <span class="label">拼音</span>
-                        {{ item.pinyin }}
-                    </span>
-                    <span v-else-if="item.type === 'variant'">
-                        <span class="label">繁簡對照</span>
-                        輸入：{{ item.inputChar }} → 正確：<b>{{ item.correctChar }}</b>
-                        <br>{{ item.pinyin }}
-                    </span>
-                    <span v-else-if="item.type === 'wrong'">
-                        <span class="label">正確答案</span>
-                        <b>{{ item.correctChar }}</b>
-                        <br>{{ item.pinyin }}
-                        <br><small v-if="item.trans">({{ item.trans }})</small>
-                    </span>
-                    <span v-else-if="item.type === 'extra'">
-                        <span class="label">多打的字</span>
-                        此處無文字
-                    </span>
+    <div class="feedback-section" id="feedbackSection">
+        <div class="result-status" id="resultStatus"></div>
+
+        <div class="comparison-display" id="comparisonDisplay">
+            </div>
+
+        <div class="detail-pane" id="detailPane">
+            <div class="detail-header">
+                <span>單字詳解 (點擊聽發音)</span>
+                <span class="close-detail" onclick="closeDetail()">✕</span>
+            </div>
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <strong>你打的 You Typed</strong>
+                    <div id="typedChar" class="detail-char --error-color"></div>
+                    <div id="typedPinyin" class="detail-pinyin"></div>
                 </div>
-            </span>
-            <span v-if="missingCount > 0" style="color:#bdc3c7; font-size:18px; margin-left:10px;">
-                ... (漏掉 {{ missingCount }} 個字)
-            </span>
-        </div>
-        
-        <div style="text-align:center; margin-top:40px;">
-            <button class="btn-lvl" @click="reset">重新嘗試 (Retry)</button>
-            <button class="btn-main" @click="nextLevel" v-if="currentIdx < 5" style="margin-left:20px;">下一題 (Next)</button>
+                <div class="detail-item" style="cursor:pointer;" onclick="speakCurrentCorrect()">
+                    <strong>應該是 Correct</strong>
+                    <div id="correctChar" class="detail-char"></div>
+                    <div id="correctPinyin" class="detail-pinyin"></div>
+                    <div id="correctDefn" class="detail-defn"></div>
+                </div>
+            </div>
         </div>
     </div>
+
+    <div class="next-btn-container" id="nextBtnContainer">
+        <button class="btn-next" onclick="loadNextQuestion()">下一題 Next 🎉</button>
+    </div>
+
 </div>
 
 <script>
-const { createApp, ref } = Vue;
-const { pinyin } = pinyinPro;
+    // --- 題目資料與自動拼音/英文意思數據 ---
+    // 我已根據你提供的內容，整理出繁體、拼音、以及簡單的英文意思。
+    const gameData = [
+        {
+            id: 1,
+            audio: "q1.mp3",
+            answer: "羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？",
+            // 逐字數據：[漢字, 拼音, 英文意思]
+            charData: [["羅","Luó","Luo (surname)"],["珊","shān","coral"],["蒂","dì","stem/base"],["，","",""],["下","xià","below/after"],["課","kè","class"],["啦","la","(particle)"],["！","",""],["怎","zěn","how"],["麼","me","(particle)"],["樣","yàng","manner/shape"],["？","",""],["你","nǐ","you"],["們","men","(plural particle)"],["班","bān","class"],["上","shàng","above/on"],["有","yǒu","have"],["我","wǒ","I/me"],["們","men","(plural particle)"],["上","shàng","above/last"],["個","ge","(measure word)"],["學","xué","study"],["期","qī","period/semester"],["的","de","(possessive particle)"],["同","tóng","same/together"],["學","xué","study/student"],["嗎","ma","(question particle)"],["？","",""]]
+        },
+        {
+            id: 2,
+            audio: "q2.mp3",
+            answer: "沒有，都沒有。你們班怎麼樣？",
+            charData: [["沒","méi","not have"],["有","yǒu","have"],["，","",""],["都","dōu","all"],["沒","méi","not have"],["有","yǒu","have"],["。","",""],["你","nǐ","you"],["們","men","(plural particle)"],["班","bān","class"],["怎","zěn","how"],["麼","me","(particle)"],["樣","yàng","manner/shape"],["？","",""]]
+        },
+        {
+            id: 3,
+            audio: "q3.mp3",
+            answer: "都是新生，我一個也不認識，而且只有我一個男的。",
+            charData: [["都","dōu","all"],["是","shì","be/is/am"],["新","xīn","new"],["生","shēng","student/birth"],["，","",""],["我","wǒ","I/me"],["一","yī","one"],["個","ge","(measure word)"],["也","yě","also"],["不","bù","not"],["認","rèn","recognize"],["識","shí","know"],["，","",""],["而","ér","and/but"],["且","qiě","also/and"],["只","zhǐ","only"],["有","yǒu","have"],["我","wǒ","I/me"],["一","yī","one"],["個","ge","(measure word)"],["男","nán","male"],["的","de","(particle)"],["。","",""]]
+        },
+        {
+            id: 4,
+            audio: "q4.mp3",
+            answer: "老師呢？老師怎麼樣？",
+            charData: [["老","lǎo","old/teacher"],["師","shī","teacher"],["呢","ne","(question particle)"],["？","",""],["老","lǎo","old/teacher"],["師","shī","teacher"],["怎","zěn","how"],["麼","me","(particle)"],["樣","yàng","manner/shape"],["？","",""]]
+        },
+        {
+            id: 5,
+            audio: "q5.mp3",
+            answer: "老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？",
+            charData: [["老","lǎo","old/teacher"],["師","shī","teacher"],["很","hěn","very"],["嚴","yán","strict"],["。","",""],["他","tā","he"],["說","shuō","speak"],["我","wǒ","I/me"],["們","men","(plural particle)"],["這","zhè","this"],["學","xué","study"],["期","qī","period/semester"],["除","chú","except"],["了","le","(particle)"],["每","měi","every"],["一","yī","one"],["課","kè","class"],["的","de","(possessive particle)"],["口","kǒu","mouth/oral"],["試","shì","test"],["、","",""],["筆","bǐ","pen/written"],["試","shì","test"],["以","yǐ","via/according to"],["外","wài","outside"],["還","hái","also/still"],["要","yào","want/need"],["做","zuò","do"],["兩","liǎng","two"],["次","cì","time/occurrence"],["口","kǒu","mouth/oral"],["頭","tóu","head"],["報","bào","report"],["告","gào","tell/report"],["，","",""],["我","wǒ","I/me"],["覺","jué","feel"],["得","de","(particle)"],["壓","yā","pressure"],["力","lì","power/force"],["好","hǎo","good/very"],["大","dà","big"],["。","",""],["你","nǐ","you"],["們","men","(plural particle)"],["班","bān","class"],["呢","ne","(question particle)"],["？","",""]]
+        },
+        {
+            id: 6,
+            audio: "q6.mp3",
+            answer: "老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。",
+            charData: [["老","lǎo","old/teacher"],["師","shī","teacher"],["的","de","(possessive particle)"],["說","shuō","speak"],["明","míng","bright/explain"],["很","hěn","very"],["清","qīng","clear"],["楚","chǔ","clear"],["，","",""],["同","tóng","same/together"],["學","xué","study/student"],["也","yě","also"],["很","hěn","very"],["熱","rè","hot/enthusiastic"],["情","qíng","feeling/emotion"],["。","",""],["我","wǒ","I/me"],["們","men","(plural particle)"],["今","jīn","now/today"],["天","tiān","day/sky"],["就","jiù","then/at once"],["一","yī","one"],["起","qǐ","rise/together"],["去","qù","go"],["吃","chī","eat"],["中","zhōng","middle/china"],["飯","fàn","meal/rice"],["了","le","(particle)"],["。","",""]]
+        }
+    ];
 
-const variants = { '体':'體', '国':'國', '说':'說', '这':'這', '么':'麼', '系':'係', '学':'學', '门':'門', '再':'在', '你':'妳', '妳':'你', '面':'麵', '裡':'裏' };
-
-createApp({
-    setup() {
-        const quizData = [
-            { text: "羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？", trans: { "學期": "semester", "同學": "classmate" } },
-            { text: "沒有，都沒有。你們班怎麼樣？", trans: { "怎麼樣": "how is it" } },
-            { text: "都是新生，我一個也不認識，而且只有我一個男的。", trans: { "新生": "new student", "認識": "know" } },
-            { text: "老師呢？老師怎麼樣？", trans: { "老師": "teacher" } },
-            { text: "老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？", trans: { "口試": "oral exam", "壓力": "stress" } },
-            { text: "老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。", trans: { "說明": "explanation", "熱情": "enthusiastic" } }
-        ];
-
-        const currentIdx = ref(0);
-        const userInput = ref("");
-        const submitted = ref(false);
-        const isPlaying = ref(false);
-        const playbackRate = ref(1.0);
-        const player = ref(null);
-        const diffResults = ref([]);
-        const score = ref(0);
-        const missingCount = ref(0);
-
-        const togglePlay = () => { if (player.value.paused) player.value.play(); else player.value.pause(); };
-        const setSpeed = (s) => { playbackRate.value = s; player.value.playbackRate = s; };
-        const skip = (v) => { player.value.currentTime += v; };
-
-        const checkAnswer = () => {
-            const targetStr = quizData[currentIdx.value].text.replace(/[^\u4e00-\u9fa5]/g, "");
-            const inputStr = userInput.value.replace(/[^\u4e00-\u9fa5]/g, "");
-            const transMap = quizData[currentIdx.value].trans;
-            
-            let results = [];
-            let correctCount = 0;
-
-            for (let i = 0; i < inputStr.length; i++) {
-                const iChar = inputStr[i];
-                const tChar = targetStr[i] || "";
-                let type = 'wrong';
-
-                if (iChar === tChar) {
-                    type = 'correct';
-                    correctCount++;
-                } else if (variants[iChar] === tChar || variants[tChar] === iChar) {
-                    type = 'variant';
-                    correctCount++;
-                } else if (!tChar) {
-                    type = 'extra';
-                }
-
-                results.push({
-                    inputChar: iChar,
-                    correctChar: tChar,
-                    type: type,
-                    pinyin: tChar ? pinyin(tChar, { toneType: 'symbol' }) : "",
-                    trans: findTrans(tChar, transMap)
-                });
-            }
-
-            diffResults.value = results;
-            missingCount.value = Math.max(0, targetStr.length - inputStr.length);
-            score.value = Math.round((correctCount / targetStr.length) * 100);
-            submitted.value = true;
-        };
-
-        const findTrans = (char, map) => {
-            for (let key in map) { if (key.includes(char)) return map[key]; }
-            return "";
-        };
-
-        const speak = (t) => {
-            if (!t) return;
-            const u = new SpeechSynthesisUtterance(t);
-            u.lang = 'zh-TW';
-            window.speechSynthesis.speak(u);
-        };
-
-        const changeLevel = (i) => { currentIdx.value = i; reset(); };
-        const nextLevel = () => { currentIdx.value++; reset(); };
-        const reset = () => { 
-            submitted.value = false; userInput.value = ""; 
-            if (player.value) { player.value.pause(); player.value.currentTime = 0; }
-        };
-
-        return { currentIdx, userInput, submitted, isPlaying, playbackRate, player, diffResults, score, missingCount, togglePlay, setSpeed, skip, checkAnswer, speak, changeLevel, nextLevel, reset };
-    }
-}).mount('#app');
-</script>
-</body>
-</html>
+    // --- 繁簡轉換輔助（僅包含題目中出現的字） ---
+    //
