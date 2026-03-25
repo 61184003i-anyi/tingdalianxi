@@ -3,618 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>華裔中文聽寫練習</title>
+    <title>聽打練習</title>
     <style>
         :root {
-            --primary-color: #4a90e2;
-            --secondary-color: #f5f7fa;
-            --success-color: #2ecc71;
+            --primary-color: #3498db;
+            --success-color: #27ae60;
             --error-color: #e74c3c;
-            --text-color: #333;
-            --border-radius: 8px;
+            --bg-color: #f8f9fa;
         }
 
         body {
-            font-family: 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', sans-serif;
-            background-color: var(--secondary-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0; padding: 20px;
+            display: flex; justify-content: center;
         }
 
         .container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 800px;
+            background: white; padding: 30px; border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%; max-width: 700px;
         }
 
-        h1 {
-            text-align: center;
-            color: var(--primary-color);
-            margin-bottom: 30px;
-        }
+        .progress-container { height: 8px; background: #eee; border-radius: 4px; margin-bottom: 20px; }
+        .progress-fill { height: 100%; background: var(--success-color); width: 0%; transition: 0.3s; border-radius: 4px; }
 
-        /* 音訊控制區 */
-        .audio-player {
-            background-color: var(--secondary-color);
-            padding: 20px;
-            border-radius: var(--border-radius);
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: var(--border-radius);
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s, transform 0.1s;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .btn-play { background-color: var(--success-color); color: white; }
-        .btn-pause { background-color: #f39c12; color: white; }
-        .btn-skip { background-color: #95a5a6; color: white; }
-        .btn-speed { background-color: var(--primary-color); color: white; }
+        /* 音訊控制 */
+        .audio-box { background: #f0f3f5; padding: 20px; border-radius: 10px; text-align: center; margin-bottom: 20px; }
+        .btn-group { display: flex; justify-content: center; gap: 8px; margin-top: 15px; flex-wrap: wrap; }
+        button { border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 15px; transition: 0.2s; }
+        button:hover { opacity: 0.9; }
+        .btn-main { background: var(--primary-color); color: white; }
+        .btn-sec { background: #95a5a6; color: white; }
 
         /* 輸入區 */
-        .input-section {
-            margin-bottom: 20px;
-        }
+        textarea { width: 100%; height: 100px; padding: 15px; font-size: 22px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; resize: none; }
+        .check-row { text-align: right; margin-top: 10px; }
 
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: var(--border-radius);
-            font-size: 20px;
-            line-height: 1.6;
-            resize: none;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
+        /* 對比顯示區 */
+        #feedbackSection { margin-top: 25px; display: none; padding-top: 20px; border-top: 2px dashed #eee; }
+        .comparison-box { font-size: 32px; line-height: 1.8; margin-bottom: 20px; letter-spacing: 2px; }
+        
+        .word-unit { cursor: pointer; padding: 2px 4px; border-radius: 4px; transition: 0.2s; }
+        .word-unit:hover { background: #eef; }
+        .correct { color: #333; }
+        .wrong { color: var(--error-color); border-bottom: 3px solid var(--error-color); }
+        .missing { color: #ccc; text-decoration: line-through; }
 
-        textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
+        /* 詳細面板 */
+        .detail-card { background: #edf7ff; padding: 15px; border-radius: 10px; border-left: 6px solid var(--primary-color); display: none; margin-top: 15px; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px; }
+        .label { font-size: 12px; color: #7f8c8d; font-weight: bold; }
+        .val-char { font-size: 40px; font-weight: bold; display: block; }
+        .val-pinyin { font-size: 18px; color: #2c3e50; }
+        .val-en { font-size: 14px; color: #7f8c8d; font-style: italic; }
 
-        .check-btn-container {
-            text-align: right;
-            margin-top: 10px;
-        }
-
-        .btn-check {
-            background-color: var(--primary-color);
-            color: white;
-            font-size: 18px;
-            padding: 12px 30px;
-        }
-
-        /* 回饋區 */
-        .feedback-section {
-            margin-top: 30px;
-            border-top: 2px solid var(--secondary-color);
-            padding-top: 20px;
-            display: none; /* 預設隱藏 */
-        }
-
-        .result-status {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .status-correct { color: var(--success-color); }
-        .status-error { color: var(--error-color); }
-
-        /* 逐字對比區 */
-        .comparison-display {
-            font-size: 28px;
-            line-height: 1.8;
-            margin-bottom: 20px;
-            border: 1px solid #eee;
-            padding: 15px;
-            border-radius: var(--border-radius);
-            background-color: #fafafa;
-        }
-
-        .word-unit {
-            display: inline-block;
-            margin: 0 2px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-        }
-
-        .word-unit:hover {
-            background-color: #eaf2f8;
-            border-bottom-color: var(--primary-color);
-        }
-
-        .correct { color: var(--text-color); }
-        .incorrect { color: var(--error-color); text-decoration: underline; }
-        .missing { color: #ccc; font-style: italic; } /* 漏掉的字 */
-
-        /* 詳細回饋彈窗/區塊 */
-        .detail-pane {
-            background-color: #eaf2f8;
-            padding: 20px;
-            border-radius: var(--border-radius);
-            display: none; /* 預設隱藏 */
-            border-left: 5px solid var(--primary-color);
-        }
-
-        .detail-header {
-            font-weight: bold;
-            font-size: 18px;
-            margin-bottom: 10px;
-            color: var(--primary-color);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .close-detail {
-            cursor: pointer;
-            color: #888;
-        }
-
-        .detail-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        .detail-item strong { display: block; color: #666; font-size: 14px; margin-bottom: 5px; }
-        .detail-char { font-size: 36px; font-weight: bold; }
-        .detail-pinyin { font-size: 18px; color: #555; }
-        .detail-defn { font-size: 16px; color: #333; font-style: italic; }
-
-        /* 進度條 */
-        .progress-bar {
-            height: 10px;
-            background-color: #ddd;
-            border-radius: 5px;
-            margin-bottom: 30px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background-color: var(--success-color);
-            width: 0%;
-            transition: width 0.3s;
-        }
-
-        /* 下一題按鈕 */
-        .next-btn-container {
-            text-align: center;
-            margin-top: 30px;
-            display: none;
-        }
-
-        .btn-next {
-            background-color: var(--success-color);
-            color: white;
-            font-size: 18px;
-            padding: 12px 50px;
-        }
-
-        /* 輔助：拼音上標 */
-        ruby {
-            font-size: 28px;
-        }
-        rt {
-            font-size: 12px;
-            color: #777;
-        }
-
+        .next-btn { background: var(--success-color); color: white; width: 100%; font-size: 18px; margin-top: 20px; display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>華裔中文聽寫練習</h1>
-
-    <div class="progress-bar">
-        <div class="progress-fill" id="progressFill"></div>
-    </div>
-
-    <div class="audio-player">
-        <h3 id="questionTitle">第 1 題 / 共 6 題</h3>
-        <audio id="mainAudio"></audio>
-        <div class="controls">
-            <button class="btn-pause" onclick="controlAudio('rewind')">⏪ -1s</button>
-            <button class="btn-play" id="playBtn" onclick="controlAudio('play')">播放</button>
-            <button class="btn-pause" id="pauseBtn" onclick="controlAudio('pause')" style="display:none;">暫停</button>
-            <button class="btn-pause" onclick="controlAudio('forward')">⏩ +1s</button>
-            <button class="btn-speed" id="speedBtn" onclick="controlAudio('speed')">速度: 1.0x</button>
+    <div class="progress-container"><div class="progress-fill" id="prog"></div></div>
+    
+    <div class="audio-box">
+        <h3 id="qTitle">加載中...</h3>
+        <audio id="player"></audio>
+        <div class="btn-group">
+            <button onclick="changeTime(-1)" class="btn-sec">⏪ -1s</button>
+            <button onclick="togglePlay()" id="playBtn" class="btn-main">播放音檔</button>
+            <button onclick="changeTime(1)" class="btn-sec">+1s ⏩</button>
+            <button onclick="changeSpeed()" id="speedBtn" class="btn-sec">速度 1.0x</button>
         </div>
     </div>
 
-    <div class="input-section">
-        <textarea id="userInput" placeholder="請聽錄音，並將聽到的漢字打在這裡... (不必打標點符號)"></textarea>
-        <div class="check-btn-container">
-            <button class="btn-check" id="checkBtn" onclick="checkAnswer()">檢查答案</button>
-        </div>
+    <textarea id="userInput" placeholder="請聽音檔並輸入漢字..."></textarea>
+    <div class="check-row">
+        <button onclick="checkAnswer()" id="checkBtn" class="btn-main" style="background: #2c3e50;">檢查答案 (不需標點)</button>
     </div>
 
-    <div class="feedback-section" id="feedbackSection">
-        <div class="result-status" id="resultStatus"></div>
-
-        <div class="comparison-display" id="comparisonDisplay">
-            </div>
-
-        <div class="detail-pane" id="detailPane">
-            <div class="detail-header">
-                <span>單字詳解 (點擊聽發音)</span>
-                <span class="close-detail" onclick="closeDetail()">✕</span>
+    <div id="feedbackSection">
+        <div id="statusMsg" style="font-weight: bold; text-align: center; margin-bottom: 10px;"></div>
+        <div class="comparison-box" id="compBox"></div>
+        
+        <div class="detail-card" id="detailCard">
+            <div style="display:flex; justify-content: space-between;">
+                <strong>點擊正確字可聽發音</strong>
+                <span style="cursor:pointer" onclick="this.parentElement.parentElement.style.display='none'">✕</span>
             </div>
             <div class="detail-grid">
-                <div class="detail-item">
-                    <strong>你打的 You Typed</strong>
-                    <div id="typedChar" class="detail-char --error-color"></div>
-                    <div id="typedPinyin" class="detail-pinyin"></div>
+                <div>
+                    <span class="label">你打的 You Typed</span>
+                    <span id="vUserChar" class="val-char" style="color:var(--error-color)"></span>
                 </div>
-                <div class="detail-item" style="cursor:pointer;" onclick="speakCurrentCorrect()">
-                    <strong>應該是 Correct</strong>
-                    <div id="correctChar" class="detail-char"></div>
-                    <div id="correctPinyin" class="detail-pinyin"></div>
-                    <div id="correctDefn" class="detail-defn"></div>
+                <div onclick="speakCorrect()" style="cursor:pointer">
+                    <span class="label">正確字 Correct</span>
+                    <span id="vAnsChar" class="val-char"></span>
+                    <span id="vAnsPinyin" class="val-pinyin"></span>
+                    <div id="vAnsEn" class="val-en"></div>
                 </div>
             </div>
         </div>
+        <button onclick="nextQuest()" id="nextBtn" class="next-btn">下一題 Next ➔</button>
     </div>
-
-    <div class="next-btn-container" id="nextBtnContainer">
-        <button class="btn-next" onclick="loadNextQuestion()">下一題 Next 🎉</button>
-    </div>
-
 </div>
 
 <script>
-    // --- 題目資料與自動拼音/英文意思數據 ---
-    // 我已根據你提供的內容，整理出繁體、拼音、以及簡單的英文意思。
-    const gameData = [
-        {
-            id: 1,
-            audio: "q1.mp3",
-            answer: "羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？",
-            // 逐字數據：[漢字, 拼音, 英文意思]
-            charData: [["羅","Luó","Luo (surname)"],["珊","shān","coral"],["蒂","dì","stem/base"],["，","",""],["下","xià","below/after"],["課","kè","class"],["啦","la","(particle)"],["！","",""],["怎","zěn","how"],["麼","me","(particle)"],["樣","yàng","manner/shape"],["？","",""],["你","nǐ","you"],["們","men","(plural particle)"],["班","bān","class"],["上","shàng","above/on"],["有","yǒu","have"],["我","wǒ","I/me"],["們","men","(plural particle)"],["上","shàng","above/last"],["個","ge","(measure word)"],["學","xué","study"],["期","qī","period/semester"],["的","de","(possessive particle)"],["同","tóng","same/together"],["學","xué","study/student"],["嗎","ma","(question particle)"],["？","",""]]
-        },
-        {
-            id: 2,
-            audio: "q2.mp3",
-            answer: "沒有，都沒有。你們班怎麼樣？",
-            charData: [["沒","méi","not have"],["有","yǒu","have"],["，","",""],["都","dōu","all"],["沒","méi","not have"],["有","yǒu","have"],["。","",""],["你","nǐ","you"],["們","men","(plural particle)"],["班","bān","class"],["怎","zěn","how"],["麼","me","(particle)"],["樣","yàng","manner/shape"],["？","",""]]
-        },
-        {
-            id: 3,
-            audio: "q3.mp3",
-            answer: "都是新生，我一個也不認識，而且只有我一個男的。",
-            charData: [["都","dōu","all"],["是","shì","be/is/am"],["新","xīn","new"],["生","shēng","student/birth"],["，","",""],["我","wǒ","I/me"],["一","yī","one"],["個","ge","(measure word)"],["也","yě","also"],["不","bù","not"],["認","rèn","recognize"],["識","shí","know"],["，","",""],["而","ér","and/but"],["且","qiě","also/and"],["只","zhǐ","only"],["有","yǒu","have"],["我","wǒ","I/me"],["一","yī","one"],["個","ge","(measure word)"],["男","nán","male"],["的","de","(particle)"],["。","",""]]
-        },
-        {
-            id: 4,
-            audio: "q4.mp3",
-            answer: "老師呢？老師怎麼樣？",
-            charData: [["老","lǎo","old/teacher"],["師","shī","teacher"],["呢","ne","(question particle)"],["？","",""],["老","lǎo","old/teacher"],["師","shī","teacher"],["怎","zěn","how"],["麼","me","(particle)"],["樣","yàng","manner/shape"],["？","",""]]
-        },
-        {
-            id: 5,
-            audio: "q5.mp3",
-            answer: "老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？",
-            charData: [["老","lǎo","old/teacher"],["師","shī","teacher"],["很","hěn","very"],["嚴","yán","strict"],["。","",""],["他","tā","he"],["說","shuō","speak"],["我","wǒ","I/me"],["們","men","(plural particle)"],["這","zhè","this"],["學","xué","study"],["期","qī","period/semester"],["除","chú","except"],["了","le","(particle)"],["每","měi","every"],["一","yī","one"],["課","kè","class"],["的","de","(possessive particle)"],["口","kǒu","mouth/oral"],["試","shì","test"],["、","",""],["筆","bǐ","pen/written"],["試","shì","test"],["以","yǐ","via/according to"],["外","wài","outside"],["還","hái","also/still"],["要","yào","want/need"],["做","zuò","do"],["兩","liǎng","two"],["次","cì","time/occurrence"],["口","kǒu","mouth/oral"],["頭","tóu","head"],["報","bào","report"],["告","gào","tell/report"],["，","",""],["我","wǒ","I/me"],["覺","jué","feel"],["得","de","(particle)"],["壓","yā","pressure"],["力","lì","power/force"],["好","hǎo","good/very"],["大","dà","big"],["。","",""],["你","nǐ","you"],["們","men","(plural particle)"],["班","bān","class"],["呢","ne","(question particle)"],["？","",""]]
-        },
-        {
-            id: 6,
-            audio: "q6.mp3",
-            answer: "老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。",
-            charData: [["老","lǎo","old/teacher"],["師","shī","teacher"],["的","de","(possessive particle)"],["說","shuō","speak"],["明","míng","bright/explain"],["很","hěn","very"],["清","qīng","clear"],["楚","chǔ","clear"],["，","",""],["同","tóng","same/together"],["學","xué","study/student"],["也","yě","also"],["很","hěn","very"],["熱","rè","hot/enthusiastic"],["情","qíng","feeling/emotion"],["。","",""],["我","wǒ","I/me"],["們","men","(plural particle)"],["今","jīn","now/today"],["天","tiān","day/sky"],["就","jiù","then/at once"],["一","yī","one"],["起","qǐ","rise/together"],["去","qù","go"],["吃","chī","eat"],["中","zhōng","middle/china"],["飯","fàn","meal/rice"],["了","le","(particle)"],["。","",""]]
-        }
+    // 遊戲數據
+    const data = [
+        { q: "羅珊蒂，下課啦！怎麼樣？你們班上有我們上個學期的同學嗎？", p: ["Luó","shān","dì",",","xià","kè","la","!","zěn","me","yàng","?","nǐ","men","bān","shàng","yǒu","wǒ","men","shàng","ge","xué","qī","de","tóng","xué","ma","?"], en: ["Luo","coral","stem","","off","class","(p)","","how","","way","","you","(pl)","class","on/in","have","we","(pl)","last","(mw)","study","term","(p)","same","study","(q)",""], audio: "q1.mp3" },
+        { q: "沒有，都沒有。你們班怎麼樣？", p: ["méi","yǒu",",","dōu","méi","yǒu",".","nǐ","men","bān","zěn","me","yàng","?"], en: ["no","have","","all","no","have","","you","(pl)","class","how","","way",""], audio: "q2.mp3" },
+        { q: "都是新生，我一個也不認識，而且只有我一個男的。", p: ["dōu","shì","xīn","shēng",",","wǒ","yī","ge","yě","bù","rèn","shì",",","ér","qiě","zhǐ","yǒu","wǒ","yī","ge","nán","de","."], en: ["all","is","new","born","","I","one","(mw)","also","not","know","know","","and","also","only","have","I","one","(mw)","male","(p)",""], audio: "q3.mp3" },
+        { q: "老師呢？老師怎麼樣？", p: ["lǎo","shī","ne","?","lǎo","shī","zěn","me","yàng","?"], en: ["old","master","(q)","","old","master","how","","way",""], audio: "q4.mp3" },
+        { q: "老師很嚴。他說我們這學期除了每一課的口試、筆試以外還要做兩次口頭報告，我覺得壓力好大。你們班呢？", p: ["lǎo","shī","hěn","yán",".","tā","shuō","wǒ","men","zhè","xué","qī","chú","le","měi","yī","kè","de","kǒu","shì","、","bǐ","shì","yǐ","wài","hái","yào","zuò","liǎng","cì","kǒu","tóu","bào","gào",",","wǒ","jué","de","yā","lì","hǎo","dà",".","nǐ","men","bān","ne","?"], en: ["old","master","very","strict","","he","say","we","(pl)","this","term","term","except","(p)","every","one","class","(p)","mouth","test","","pen","test","by","outside","also","want","do","two","times","mouth","head","report","tell","","I","feel","(p)","press","force","very","big","","you","(pl)","class","(q)",""], audio: "q5.mp3" },
+        { q: "老師的說明很清楚，同學也很熱情。我們今天就一起去吃中飯了。", p: ["lǎo","shī","de","shuō","míng","hěn","qīng","chǔ",",","tóng","xué","yě","hěn","rè","qíng",".","wǒ","men","jīn","tiān","jiù","yī","qǐ","qù","chī","zhōng","fàn","le","."], en: ["old","master","(p)","speak","clear","very","clear","clear","","same","study","also","very","hot","feeling","","we","(pl)","now","day","then","one","up","go","eat","mid","meal","(p)",""], audio: "q6.mp3" }
     ];
 
-    // --- 繁簡轉換輔助（僅包含題目中出現的字） ---
-    // 為了能讓學生打簡體也能對，比對時會統一轉成一種格式
-    const s2tTable = {"罗":"羅","珊":"珊","蒂":"蒂","下":"下","课":"課","啦":"啦","怎":"怎","么":"麼","样":"樣","你":"你","们":"們","班":"班","上":"上","有":"有","我":"我","个":"個","学":"學","期":"期","的":"的","同":"同","吗":"嗎","没":"沒","都":"都","是":"是","新","生":"生","一":"一","也":"也","不":"不","认":"認","识":"識","而":"而","且":"且","只":"只","男":"男","老":"老","师":"師","呢":"呢","很":"很","严":"嚴","他":"他","说":"說","这":"這","除":"除","了":"了","每":"每","口":"口","试":"試","笔":"筆","以":"以","外":"外","还":"還","要":"要","做":"做","两":"兩","次":"次","头":"頭","报":"報","告":"告","觉":"覺","得":"得","压":"壓","力":"力","好":"好","大":"大","明":"明","清":"清","楚":"楚","热":"熱","情":"情","今":"今","天":"天","就":"就","起":"起","去":"去","吃":"吃","中":"中","饭":"飯"};
+    // 繁簡簡單對應表 (核心字)
+    const SC_TC = {"罗":"羅","珊":"珊","蒂":"蒂","下":"下","课":"課","啦":"啦","怎":"怎","么":"麼","样":"樣","你":"你","们":"們","班":"班","上":"上","有":"有","我":"我","个":"個","学":"學","期":"期","的":"的","同":"同","吗":"嗎","没":"沒","都":"都","是":"是","新":"新","生":"生","一":"一","也":"也","不":"不","认":"認","识":"識","而":"而","且":"且","只":"只","男":"男","老":"老","师":"師","呢":"呢","很":"很","严":"嚴","他":"他","说":"說","这":"這","除":"除","了":"了","每":"每","口":"口","试":"試","笔":"筆","以":"以","外":"外","还":"還","要":"要","做":"做","两":"兩","次":"次","头":"頭","报":"報","告":"告","觉":"覺","得":"得","压":"壓","力":"力","好":"好","大":"大","明":"明","清":"清","楚":"楚","热":"熱","情":"情","今":"今","天":"天","就":"就","起":"起","去":"去","吃":"吃","中":"中","饭":"飯"};
 
-    function simplifyText(text) {
-        // 為了簡單起見，我們比對時把輸入的繁體都轉為簡體進行真空比對
-        let output = "";
-        for (let char of text) {
-            // 找出 table 中對應的繁體，如果有，則該字是簡體，轉為繁體比對
-            // 這裡採用反向，將所有輸入轉為「繁體」來比對（因為資料庫是繁體）
-            output += char; 
-        }
-        // 實際執行：為了確保相容，最穩健的方法是比對時「不管繁簡」。
-        // 這裡我們實作一個：將繁簡都轉為同一個碼進行比對的函式。
-        return text; // 預留
-    }
+    let cur = 0, speed = 1.0;
+    const player = document.getElementById('player');
+    const uInput = document.getElementById('userInput');
 
-    // 將輸入文字轉為繁體（基於上面的簡表）
-    function convertToTC(text) {
-        let output = "";
-        for (let char of text) {
-            output += s2tTable[char] || char; // 如果在表中找到簡體，轉繁體；否則保留原字
-        }
-        return output;
-    }
-
-    // --- 遊戲邏輯變數 ---
-    let currentIdx = 0;
-    let currentSpeed = 1.0;
-    const speeds = [1.0, 0.75, 0.5];
-    let selectedCorrectSpeech = ""; // 儲存當前選定單字的正確漢字供 TTS 播放
-
-    // --- DOM 元素 ---
-    const audioEl = document.getElementById('mainAudio');
-    const playBtn = document.getElementById('playBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const speedBtn = document.getElementById('speedBtn');
-    const userInputEl = document.getElementById('userInput');
-    const feedbackSection = document.getElementById('feedbackSection');
-    const resultStatusEl = document.getElementById('resultStatus');
-    const comparisonDisplayEl = document.getElementById('comparisonDisplay');
-    const detailPaneEl = document.getElementById('detailPane');
-    const nextBtnContainerEl = document.getElementById('nextBtnContainer');
-    const progressFillEl = document.getElementById('progressFill');
-
-    // --- 初始化 ---
-    function init() {
-        loadQuestion(currentIdx);
-        // 初始化本地拼音 TTS (如果需要單字發音)
-        if ('speechSynthesis' in window) {
-            console.log("TTS ready.");
-        } else {
-            alert("您的瀏覽器不支援文字轉語音功能，單字發音將無法使用。");
-        }
-    }
-
-    // --- 載入題目 ---
-    function loadQuestion(idx) {
-        const data = gameData[idx];
-        document.getElementById('questionTitle').textContent = `第 ${data.id} 題 / 共 ${gameData.length} 題`;
-        audioEl.src = data.audio;
-        audioEl.playbackRate = currentSpeed;
-        
-        userInputEl.value = "";
-        feedbackSection.style.display = "none";
-        detailPaneEl.style.display = "none";
-        nextBtnContainerEl.style.display = "none";
-        userInputEl.disabled = false;
+    function loadQ() {
+        document.getElementById('qTitle').innerText = `第 ${cur+1} 題 / 共 ${data.length} 題`;
+        player.src = data[cur].audio;
+        uInput.value = "";
+        uInput.disabled = false;
+        document.getElementById('prog').style.width = `${(cur/data.length)*100}%`;
+        document.getElementById('feedbackSection').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'none';
         document.getElementById('checkBtn').disabled = false;
-
-        // 更新進度條
-        const progress = ((idx) / gameData.length) * 100;
-        progressFillEl.style.width = `${progress}%`;
-
-        // 監聽播放結束
-        audioEl.onended = () => {
-            playBtn.style.display = "inline-block";
-            pauseBtn.style.display = "none";
-        };
     }
 
-    // --- 音訊控制 ---
-    function controlAudio(action) {
-        switch(action) {
-            case 'play':
-                audioEl.play();
-                playBtn.style.display = "none";
-                pauseBtn.style.display = "inline-block";
-                break;
-            case 'pause':
-                audioEl.pause();
-                playBtn.style.display = "inline-block";
-                pauseBtn.style.display = "none";
-                break;
-            case 'rewind':
-                audioEl.currentTime = Math.max(0, audioEl.currentTime - 1);
-                break;
-            case 'forward':
-                audioEl.currentTime = Math.min(audioEl.duration, audioEl.currentTime + 1);
-                break;
-            case 'speed':
-                let nextSpeedIdx = (speeds.indexOf(currentSpeed) + 1) % speeds.length;
-                currentSpeed = speeds[nextSpeedIdx];
-                audioEl.playbackRate = currentSpeed;
-                speedBtn.textContent = `速度: ${currentSpeed.toFixed(1)}x`;
-                break;
-        }
+    function togglePlay() { player.paused ? player.play() : player.pause(); }
+    function changeTime(sec) { player.currentTime += sec; }
+    function changeSpeed() {
+        speed = speed === 1.0 ? 0.75 : (speed === 0.75 ? 0.5 : 1.0);
+        player.playbackRate = speed;
+        document.getElementById('speedBtn').innerText = `速度 ${speed}x`;
     }
 
-    // --- 核心：檢查答案 ---
     function checkAnswer() {
-        const data = gameData[currentIdx];
-        let userRaw = userInputEl.value;
+        const item = data[cur];
+        const rawUser = uInput.value.trim();
+        
+        // 1. 正規化：轉繁體、去標點
+        const normalize = (str) => {
+            let tc = "";
+            for(let c of str) tc += SC_TC[c] || c;
+            return tc.replace(/[，。？！、\s,.?!]/g, "");
+        };
 
-        // 1. 繁簡轉換 (將使用者輸入全部轉為繁體，與資料庫一致)
-        let userTC = convertToTC(userRaw);
+        const cleanAns = normalize(item.q);
+        const cleanUser = normalize(rawUser);
 
-        // 2. 移除標點符號進行核心比對
-        // 這個正則表達式移除所有標準的中英文標點
-        const regexPunctuation = /[\s,.\u3002\uff0c\uff1f\uff01\u3001\uff1b\uff1a\u201c\u201d\u2018\u2019\u2800-\u28FF]/g;
-        let cleanAnswer = data.answer.replace(regexPunctuation, '');
-        let cleanUser = userTC.replace(regexPunctuation, '');
+        document.getElementById('feedbackSection').style.display = 'block';
+        const compBox = document.getElementById('compBox');
+        compBox.innerHTML = "";
 
-        feedbackSection.style.display = "block";
-        comparisonDisplayEl.innerHTML = ""; // 清空之前的比對
-        detailPaneEl.style.display = "none";
+        // 建立對比視圖
+        const ansChars = item.q.split("").filter(c => !/[，。？！、,.?!]/.test(c));
+        const userChars = cleanUser.split("");
 
-        if (cleanUser === cleanAnswer) {
-            // --- 完全正確 ---
-            resultStatusEl.textContent = "🥳 🎉 完全正確！太棒了！";
-            resultStatusEl.className = "result-status status-correct";
-            userInputEl.disabled = true;
-            document.getElementById('checkBtn').disabled = true;
+        let isAllCorrect = (cleanAns === cleanUser);
+
+        ansChars.forEach((target, i) => {
+            let userChar = userChars[i] || "";
+            let status = "";
+            if (!userChar) status = "missing";
+            else if (userChar === target) status = "correct";
+            else status = "wrong";
+
+            const span = document.createElement('span');
+            span.className = `word-unit ${status}`;
+            span.innerText = target;
             
-            // 顯示正確答案的拼音 (全部)
-            renderCorrectPinyin(data.charData);
-            
-            // 顯示下一題按鈕
-            nextBtnContainerEl.style.display = "block";
-            if (currentIdx === gameData.length - 1) {
-                document.querySelector('.btn-next').textContent = "結束練習，再試一次？";
-            } else {
-                document.querySelector('.btn-next').textContent = "下一題 Next 🎉";
-            }
-        } else {
-            // --- 有錯誤 ---
-            resultStatusEl.textContent = "🤔 嗯... 看起來有些地方不太一樣喔，點擊下面的字看看。";
-            resultStatusEl.className = "result-status status-error";
-            
-            // 執行逐字比對演算法並渲染
-            renderComparison(data.charData, userTC, regexPunctuation);
-        }
-    }
-
-    // 輔助：正確時渲染全拼音
-    function renderCorrectPinyin(charData) {
-        charData.forEach(item => {
-            const char = item[0];
-            const pinyin = item[1];
-            if (pinyin === "") { // 標點
-                comparisonDisplayEl.innerHTML += char;
-            } else {
-                comparisonDisplayEl.innerHTML += `<ruby>${char}<rt>${pinyin}</rt></ruby>`;
-            }
+            // 點擊顯示詳細對比
+            span.onclick = () => showDetail(target, userChar, i);
+            compBox.appendChild(span);
         });
+
+        if (isAllCorrect) {
+            document.getElementById('statusMsg').innerHTML = "🟢 完全正確！Excellent!";
+            document.getElementById('nextBtn').style.display = 'block';
+            uInput.disabled = true;
+            document.getElementById('checkBtn').disabled = true;
+        } else {
+            document.getElementById('statusMsg').innerHTML = "🔴 有些字不對，點擊紅色的字看看。";
+        }
     }
 
-    // --- 逐字比對與渲染算法 ---
-    function renderComparison(correctCharData, userTC, regexPunc) {
-        // 先建立一個「只有漢字」的標準答案陣列，用於比對
-        const standardHanziArr = correctCharData.filter(item => item[1] !== "").map(item => item[0]);
-        // 使用者輸入的「只有漢字」陣列 (已轉繁)
-        const userHanziArr = [...userTC.replace(regexPunc, '')];
-
-        let htmlOutput = "";
-        let standardIdx = 0;
-        let userIdx = 0;
-
-        // 對整個「標準漢字陣列」進行迴圈
-        while (standardIdx < standardHanziArr.length) {
-            const sChar = standardHanziArr[standardIdx];
-            const uChar = userHanziArr[userIdx];
-
-            // 尋找此漢字在原始數據中的詳細資料 (為了標點)
-            // Note: 這種簡化算法假設標點位置不變，主要比對漢字
-            
-            if (uChar === undefined) {
-                // 漏字 (Missing)
-                htmlOutput += createWordUnit(sChar, "", "missing", standardIdx, -1);
-                standardIdx++;
-            } else if (sChar === uChar) {
-                // 正確 (Correct)
-                htmlOutput += createWordUnit(sChar, uChar, "correct", standardIdx, userIdx);
-                standardIdx++;
-                userIdx++;
-            } else {
-                // 錯誤 (Incorrect - 同音異字或真的打錯)
-                // 這裡是一個簡單的比對，假設學生沒有「多打字」，只是「打錯字」。
-                // 更複雜的 Diff 演算法在此單一檔案中實作較為困難。
-                htmlOutput += createWordUnit(sChar, uChar, "incorrect", standardIdx, userIdx);
-                standardIdx++;
-                userIdx++;
+    let lastCorrect = "";
+    function showDetail(ans, user, idx) {
+        // 找到原始數據中的拼音與英文 (需補償標點符號造成的索引位移)
+        // 簡單化處理：直接從原始 charData 找對應的字
+        const card = document.getElementById('detailCard');
+        card.style.display = 'block';
+        
+        // 獲取該句子的原始數據索引（包含標點）
+        let pinyin = "", en = "";
+        let count = 0;
+        for(let j=0; j<data[cur].q.length; j++) {
+            if(!/[，。？！、,.?!]/.test(data[cur].q[j])) {
+                if(count === idx) {
+                    pinyin = data[cur].p[j];
+                    en = data[cur].en[j];
+                    break;
+                }
+                count++;
             }
         }
 
-        // 渲染 (標點符號會被忽略，專注於漢字的比對回饋)
-        comparisonDisplayEl.innerHTML = htmlOutput;
+        document.getElementById('vUserChar').innerText = user || "（空）";
+        document.getElementById('vAnsChar').innerText = ans;
+        document.getElementById('vAnsPinyin').innerText = pinyin;
+        document.getElementById('vAnsEn').innerText = en;
+        lastCorrect = ans;
+        speakCorrect();
     }
 
-    // 建立一個可點擊的字單元 HTML
-    function createWordUnit(correctChar, typedChar, statusClass, sIdx, uIdx) {
-        // 取得正確漢字的拼音資料
-        const charDataEntry = gameData[currentIdx].charData.find(item => item[0] === correctChar);
-        const pinyin = charDataEntry ? charDataEntry[1] : "";
-        const defn = charDataEntry ? charDataEntry[2] : "";
-
-        return `<span class="word-unit ${statusClass}" 
-                      onclick="showDetail('${correctChar}', '${typedChar}', '${pinyin}', '${defn}')">
-                  ${correctChar}
-                </span>`;
+    function speakCorrect() {
+        if (!lastCorrect) return;
+        window.speechSynthesis.cancel();
+        const ut = new SpeechSynthesisUtterance(lastCorrect);
+        ut.lang = 'zh-TW';
+        ut.rate = 0.8;
+        window.speechSynthesis.speak(ut);
     }
 
-    // --- 顯示詳細回饋面板 ---
-    function showDetail(correctChar, typedChar, correctPinyin, defn) {
-        detailPaneEl.style.display = "block";
-        
-        // 設置 TTS 準備播放的字
-        selectedCorrectSpeech = correctChar;
-
-        // 填入資料
-        document.getElementById('correctChar').textContent = correctChar;
-        document.getElementById('correctPinyin').textContent = correctPinyin;
-        document.getElementById('correctDefn').textContent = defn;
-
-        if (typedChar === "" || typedChar === "undefined") {
-            document.getElementById('typedChar').textContent = "（漏打）";
-            document.getElementById('typedPinyin').textContent = "";
-        } else {
-            document.getElementById('typedChar').textContent = typedChar;
-            // 嘗試獲取使用者打的字的拼音（這很難做到精準，因為一個字多音，這裡僅簡單顯示）
-            // 由於沒有後端資料庫，我們無法得知學生選字時的拼音。
-            document.getElementById('typedPinyin').textContent = "(無法得知您的輸入拼音)";
+    function nextQuest() {
+        cur++;
+        if (cur >= data.length) {
+            alert("恭喜完成所有練習！");
+            cur = 0;
         }
-        
-        // 自動播放該字的讀音
-        speakCurrentCorrect();
+        loadQ();
     }
 
-    function closeDetail() {
-        detailPaneEl.style.display = "none";
-    }
-
-    // --- 文字轉語音 (TTS) ---
-    function speakCurrentCorrect() {
-        if (!selectedCorrectSpeech || !('speechSynthesis' in window)) return;
-        
-        // 取消之前的播放
-        speechSynthesis.cancel();
-
-        const utterance = new SpeechSynthesisUtterance(selectedCorrectSpeech);
-        utterance.lang = 'zh-TW'; // 設定為中文(台灣)，語音較符合繁體教學
-        utterance.rate = 0.8; // 稍微慢一點點
-        speechSynthesis.speak(utterance);
-    }
-
-    // --- 載入下一題 ---
-    function loadNextQuestion() {
-        if (currentIdx === gameData.length - 1) {
-            // 結束了，重頭開始
-            currentIdx = 0;
-        } else {
-            currentIdx++;
-        }
-        loadQuestion(currentIdx);
-    }
-
-    // 啟動
-    window.onload = init;
-
+    window.onload = loadQ;
 </script>
-
 </body>
 </html>
